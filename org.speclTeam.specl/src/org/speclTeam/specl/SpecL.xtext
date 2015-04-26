@@ -1,0 +1,9 @@
+grammar org.speclTeam.specl.SpecL with org.eclipse.xtext.common.Terminals
+
+generate specL "http://www.speclTeam.org/specl/SpecL"
+
+Model:
+	greetings+=Greeting*;
+	
+Greeting:
+	'Hello' name=ID '!';
