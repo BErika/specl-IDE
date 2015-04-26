@@ -1,9 +1,132 @@
-grammar org.speclTeam.specl.SpecL with org.eclipse.xtext.common.Terminals
-
+grammar org.speclTeam.specl.SpecL with org.eclipse.xtext.xbase.Xbase //org.eclipse.xtext.common.Terminals
 generate specL "http://www.speclTeam.org/specl/SpecL"
 
-Model:
-	greetings+=Greeting*;
-	
-Greeting:
-	'Hello' name=ID '!';
+MainService:
+/* Name */
+	('service' | 'Service') ':' name=ID
+	/* Types */
+	types=TypesDeclaration?
+	/* Observers */
+	observers=ObserversDeclaration?
+	/* Constructors */
+	constructors=ConstructorsDeclaration?
+	/* Operators */
+	operators=OperatorsDeclaration?
+	/* Observations */
+	observations=ObservationsDeclaration?;
+
+/** This section is used to precise the types used in the other specification parts. */
+TypesDeclaration:
+	{TypesDeclaration}
+	/* Keyword */
+	('types' | 'type' | 'Types' | 'Type') ':'
+	/* Types list */
+	(types+=(JvmTypeReference /*| enumDeclaration */) (',' types+=(XTypeLiteral /*| enumDeclaration */))*)?;
+
+/** This section is used to describe what can be known about a service. */
+ObserversDeclaration:
+	('observers' | 'Observers') ':' observers+=ObserverDeclaration+;
+
+/** A single observer */
+ObserverDeclaration:
+/* Name */
+	isConst?='const'? name=ID ':'
+	/* Signature */
+	entryTypes+=ServiceType (CROSS entryTypes+=JvmTypeReference)* TO outputType=JvmTypeReference
+	/* Preconditions */
+	preconditions+=Precondition*;
+
+/** This section is used to describe the different ways to build a service. */
+ConstructorsDeclaration:
+	('constructors' | 'Constructors') ':' constructors+=ConstructorDeclaration+;
+
+/** A single constructor */
+ConstructorDeclaration:
+/* Name */
+	name=ID ':'
+	/* Signature */
+	(entryTypes+=JvmTypeReference (CROSS entryTypes+=JvmTypeReference)*)? TO outputType=ServiceType
+	/* Preconditions */
+	precondition+=Precondition*;
+
+/** This section is used to precise what can be done on a service. */
+OperatorsDeclaration:
+	('operators' | 'Operators') ':' operators+=OperatorDeclaration+;
+
+/** A single operator */
+OperatorDeclaration:
+/* Name */
+	name=ID ':'
+	/* Signature */
+	(entryTypes+=ServiceType (CROSS entryTypes+=JvmTypeReference)*)? TO outputType=ServiceType
+	/* Preconditions */
+	precondition+=Precondition*;
+
+/** This section is used to define postconditions */
+ObservationsDeclaration:
+	('observations' | 'Observations') ':' sections+=ObservationSection+;
+
+/** An observation's section regroups observations about the same observer or operator. */
+ObservationSection:
+	'[' name=ID ']' observations+=ObservationDeclaration+;
+
+/** A single observation */
+ObservationDeclaration:
+	( /*expression=XExpression |*/ 'let' alias=ID DEF def=XExpression 'in' expression=XExpression) ';';
+
+/** The service's type */
+ServiceType:
+	{Service} '[' type=[MainService] ']';
+
+BasicFunctionCall:
+	ID '(' (ID (',' ID)*)? ')';
+
+FullFunctionCall:
+	name=ID '(' (args+=XExpression (',' args+=XExpression)*)? ')';
+
+Proposition:
+	exp=XExpression;
+
+/** A single precondition */
+Precondition:
+	'pre' fun=BasicFunctionCall 'require' req=XExpression ';';
+
+/* Terminals */
+terminal TO:
+	'->' | '→';
+
+terminal CROSS:
+	'×' | '*' | ',';
+
+terminal MINIMISATION:
+	'=min=' | '≍';
+
+terminal DEF:
+	'=def=' | '≜' | '≝';
+
+	//// Set operators
+//	
+//SetOp:
+//	IN | NOT_IN | UNION | INCLUSION | NOT_INCLUSION | INTERSECT | DIFF;
+//	
+//
+//terminal IN:
+//	'in' | '∈';
+//
+//terminal NOT_IN:
+//	'∉';
+//
+//terminal INCLUSION:
+//	'⊂';
+//
+//terminal NOT_INCLUSION:
+//	'⊄';
+//
+//terminal UNION:
+//	'∪';
+//
+//terminal INTERSECT:
+//	'∩';
+//
+//terminal DIFF:
+//	'minus' | '∖' | '\\';
